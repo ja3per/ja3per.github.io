@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Istio,service mesh,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="部署应用(在 Kubernetes 中运行)进入 Istio 安装目录。1cd /Users/sipeng.zhu/work_tools/istio/istio-1.1.0 启动应用容器(集群用的是手工 Sidecar 注入)：1$ kubectl apply -f &amp;lt;(istioctl kube-inject -f samples/bookinfo/platform/kube/bookin">
+<meta name="keywords" content="Istio,service mesh">
+<meta property="og:type" content="article">
+<meta property="og:title" content="istio实践 - 示例（BookInfo）">
+<meta property="og:url" content="http://www.aiwaner.cn/istio-2-bookinfo-example.html">
+<meta property="og:site_name" content="Jasper&#39;s Blog">
+<meta property="og:description" content="部署应用(在 Kubernetes 中运行)进入 Istio 安装目录。1cd /Users/sipeng.zhu/work_tools/istio/istio-1.1.0 启动应用容器(集群用的是手工 Sidecar 注入)：1$ kubectl apply -f &amp;lt;(istioctl kube-inject -f samples/bookinfo/platform/kube/bookin">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-05-10T05:39:56.936Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="istio实践 - 示例（BookInfo）">
+<meta name="twitter:description" content="部署应用(在 Kubernetes 中运行)进入 Istio 安装目录。1cd /Users/sipeng.zhu/work_tools/istio/istio-1.1.0 启动应用容器(集群用的是手工 Sidecar 注入)：1$ kubectl apply -f &amp;lt;(istioctl kube-inject -f samples/bookinfo/platform/kube/bookin">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.aiwaner.cn/istio-2-bookinfo-example.html">
+
+
+
+
+<meta name="baidu-site-verification" content="HSZDfuDV5vJsChTx">
+<meta name="google-site-verification" content="xlqg-trb0NI4UrO-kLvMhyPYGZSSSzFMDe0SoFRWkII">
+
+  <title>istio实践 - 示例（BookInfo） | Jasper's Blog</title>
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-137043198-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?91e4f1824e2528b40204307bacc7356d";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+   
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Jasper's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description"></h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://www.aiwaner.cn/istio-2-bookinfo-example.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jasper">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="https://avatars2.githubusercontent.com/u/7664221?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Jasper's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">istio实践 - 示例（BookInfo）</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-26T10:35:24+08:00">
+                2019-03-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Istio/" itemprop="url" rel="index">
+                    <span itemprop="name">Istio</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/istio-2-bookinfo-example.html#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="istio-2-bookinfo-example.html" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-eye"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="部署应用-在-Kubernetes-中运行"><a href="#部署应用-在-Kubernetes-中运行" class="headerlink" title="部署应用(在 Kubernetes 中运行)"></a>部署应用(在 Kubernetes 中运行)</h3><h4 id="进入-Istio-安装目录。"><a href="#进入-Istio-安装目录。" class="headerlink" title="进入 Istio 安装目录。"></a>进入 Istio 安装目录。</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd /Users/sipeng.zhu/work_tools/istio/istio-1.1.0</span><br></pre></td></tr></table></figure>
+<h4 id="启动应用容器-集群用的是手工-Sidecar-注入-："><a href="#启动应用容器-集群用的是手工-Sidecar-注入-：" class="headerlink" title="启动应用容器(集群用的是手工 Sidecar 注入)："></a>启动应用容器(集群用的是手工 Sidecar 注入)：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl apply -f &lt;(istioctl kube-inject -f samples/bookinfo/platform/kube/bookinfo.yaml)</span><br></pre></td></tr></table></figure>
+<h4 id="确认所有的服务和-Pod-都已经正确的定义和启动："><a href="#确认所有的服务和-Pod-都已经正确的定义和启动：" class="headerlink" title="确认所有的服务和 Pod 都已经正确的定义和启动："></a>确认所有的服务和 Pod 都已经正确的定义和启动：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get services</span><br><span class="line">NAME          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE</span><br><span class="line">details       ClusterIP   10.103.79.50     &lt;none&gt;        9080/TCP   65m</span><br><span class="line">kubernetes    ClusterIP   10.96.0.1        &lt;none&gt;        443/TCP    5d21h</span><br><span class="line">productpage   ClusterIP   10.106.117.25    &lt;none&gt;        9080/TCP   65m</span><br><span class="line">ratings       ClusterIP   10.102.201.140   &lt;none&gt;        9080/TCP   65m</span><br><span class="line">reviews       ClusterIP   10.106.229.52    &lt;none&gt;        9080/TCP   65m</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get pods</span><br><span class="line">NAME                              READY   STATUS    RESTARTS   AGE</span><br><span class="line">details-v1-8584b997b5-z9nlb       2/2     Running   0          65m</span><br><span class="line">hello-minikube-6fd785d459-s5wkw   1/1     Running   2          5d4h</span><br><span class="line">productpage-v1-7c54588b59-t5h8v   2/2     Running   0          65m</span><br><span class="line">ratings-v1-857d476c65-q5jjj       2/2     Running   0          65m</span><br><span class="line">reviews-v1-7746774bd6-hmf2x       2/2     Running   0          65m</span><br><span class="line">reviews-v2-7c687fc54c-mrqms       2/2     Running   0          65m</span><br><span class="line">reviews-v3-8565479856-j9x8m       2/2     Running   0          65m</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+<h4 id="确认-Bookinfo-应用程序正在运行，请通过某个-pod-中的-curl-命令向其发送请求，例如来自-ratings"><a href="#确认-Bookinfo-应用程序正在运行，请通过某个-pod-中的-curl-命令向其发送请求，例如来自-ratings" class="headerlink" title="确认 Bookinfo 应用程序正在运行，请通过某个 pod 中的 curl 命令向其发送请求，例如来自 ratings"></a>确认 Bookinfo 应用程序正在运行，请通过某个 pod 中的 curl 命令向其发送请求，例如来自 ratings</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl exec -it $(kubectl get pod -l app=ratings -o jsonpath=&apos;&#123;.items[0].metadata.name&#125;&apos;) -c ratings -- curl productpage:9080/productpage | grep -o &quot;&lt;title&gt;.*&lt;/title&gt;&quot;</span><br><span class="line">&lt;title&gt;Simple Bookstore App&lt;/title&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="确定-Ingress-的-IP-和端口"><a href="#确定-Ingress-的-IP-和端口" class="headerlink" title="确定 Ingress 的 IP 和端口"></a>确定 Ingress 的 IP 和端口</h3><h4 id="为应用定义入口网关"><a href="#为应用定义入口网关" class="headerlink" title="为应用定义入口网关"></a>为应用定义入口网关</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml</span><br></pre></td></tr></table></figure>
+<h4 id="确认网关创建完成："><a href="#确认网关创建完成：" class="headerlink" title="确认网关创建完成："></a>确认网关创建完成：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get gateway</span><br><span class="line">NAME               AGE</span><br><span class="line">bookinfo-gateway   32m</span><br></pre></td></tr></table></figure>
+<h4 id="设置访问网关的-INGRESS-HOST-和-INGRESS-PORT-变量。"><a href="#设置访问网关的-INGRESS-HOST-和-INGRESS-PORT-变量。" class="headerlink" title="设置访问网关的 INGRESS_HOST 和 INGRESS_PORT 变量。"></a>设置访问网关的 INGRESS_HOST 和 INGRESS_PORT 变量。</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ export INGRESS_HOST=$(minikube ip)</span><br><span class="line">$ export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=&apos;&#123;.spec.ports[?(@.name==&quot;http2&quot;)].nodePort&#125;&apos;)</span><br><span class="line">$ export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=&apos;&#123;.spec.ports[?(@.name==&quot;https&quot;)].nodePort&#125;&apos;)</span><br><span class="line">$ export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT</span><br></pre></td></tr></table></figure>
+<h4 id="确认设置"><a href="#确认设置" class="headerlink" title="确认设置"></a>确认设置</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">⇒  echo $GATEWAY_URL</span><br><span class="line">192.168.99.100:31380</span><br></pre></td></tr></table></figure>
+<h4 id="验证结果"><a href="#验证结果" class="headerlink" title="验证结果"></a>验证结果</h4><blockquote>
+<p>Istio Bookinfo 示例包含四个独立的微服务，每个微服务都有多个版本。 其中一个微服务 reviews 的三个不同版本已经部署并同时运行。 为了说明这导致的问题，在浏览器中访问 Bookinfo 应用程序的 /productpage 并刷新几次。 您会注意到，有时书评的输出包含星级评分，有时则不包含。 这是因为没有明确的默认服务版本路由，Istio 将以循环方式请求路由到所有可用版本。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://192.168.99.100:31380/productpage</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>Donate comment here</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="https://github.com/ja3per/ja3per.github.io/blob/master/pay-wechat.png?raw=true" alt="Jasper 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="https://github.com/ja3per/ja3per.github.io/blob/master/pay-ali.png?raw=true" alt="Jasper 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Istio/" rel="tag"># Istio</a>
+          
+            <a href="/tags/service-mesh/" rel="tag"># service mesh</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/hello-world.html" rel="next" title="Hello World">
+                <i class="fa fa-chevron-left"></i> Hello World
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/setting-up-blog-with-hexo-github-pages.html" rel="prev" title="使用hexo和github Pages搭建个人博客">
+                使用hexo和github Pages搭建个人博客 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="https://avatars2.githubusercontent.com/u/7664221?s=460&v=4" alt="Jasper">
+            
+              <p class="site-author-name" itemprop="name">Jasper</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">9</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/ja3per" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="mailto:sp2g88@gmail.com" target="_blank" title="E-Mail">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#部署应用-在-Kubernetes-中运行"><span class="nav-number">1.</span> <span class="nav-text">部署应用(在 Kubernetes 中运行)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#进入-Istio-安装目录。"><span class="nav-number">1.1.</span> <span class="nav-text">进入 Istio 安装目录。</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#启动应用容器-集群用的是手工-Sidecar-注入-："><span class="nav-number">1.2.</span> <span class="nav-text">启动应用容器(集群用的是手工 Sidecar 注入)：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#确认所有的服务和-Pod-都已经正确的定义和启动："><span class="nav-number">1.3.</span> <span class="nav-text">确认所有的服务和 Pod 都已经正确的定义和启动：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#确认-Bookinfo-应用程序正在运行，请通过某个-pod-中的-curl-命令向其发送请求，例如来自-ratings"><span class="nav-number">1.4.</span> <span class="nav-text">确认 Bookinfo 应用程序正在运行，请通过某个 pod 中的 curl 命令向其发送请求，例如来自 ratings</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#确定-Ingress-的-IP-和端口"><span class="nav-number">2.</span> <span class="nav-text">确定 Ingress 的 IP 和端口</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#为应用定义入口网关"><span class="nav-number">2.1.</span> <span class="nav-text">为应用定义入口网关</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#确认网关创建完成："><span class="nav-number">2.2.</span> <span class="nav-text">确认网关创建完成：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#设置访问网关的-INGRESS-HOST-和-INGRESS-PORT-变量。"><span class="nav-number">2.3.</span> <span class="nav-text">设置访问网关的 INGRESS_HOST 和 INGRESS_PORT 变量。</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#确认设置"><span class="nav-number">2.4.</span> <span class="nav-text">确认设置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#验证结果"><span class="nav-number">2.5.</span> <span class="nav-text">验证结果</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2015 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jasper</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="http://hexo.io" rel="external nofollow">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next" rel="external nofollow">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://ja3per.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.aiwaner.cn/istio-2-bookinfo-example.html';
+          this.page.identifier = 'istio-2-bookinfo-example.html';
+          this.page.title = 'istio实践 - 示例（BookInfo）';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://ja3per.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

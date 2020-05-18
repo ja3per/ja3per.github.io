@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Istio,service mesh,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="下载&amp;amp;安装 Istio 发布包下载和自动解压缩istio安装文件12345678910111213141516$ curl -L https://git.io/getLatestIstio | ISTIO_VERSION=1.1.0 sh -...  % Total    % Received % Xferd  Average Speed   Time    Time     Time">
+<meta name="keywords" content="Istio,service mesh">
+<meta property="og:type" content="article">
+<meta property="og:title" content="istio实践 - 环境准备">
+<meta property="og:url" content="http://www.aiwaner.cn/istio-1-env-prepare.html">
+<meta property="og:site_name" content="Jasper&#39;s Blog">
+<meta property="og:description" content="下载&amp;amp;安装 Istio 发布包下载和自动解压缩istio安装文件12345678910111213141516$ curl -L https://git.io/getLatestIstio | ISTIO_VERSION=1.1.0 sh -...  % Total    % Received % Xferd  Average Speed   Time    Time     Time">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-05-10T05:39:56.935Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="istio实践 - 环境准备">
+<meta name="twitter:description" content="下载&amp;amp;安装 Istio 发布包下载和自动解压缩istio安装文件12345678910111213141516$ curl -L https://git.io/getLatestIstio | ISTIO_VERSION=1.1.0 sh -...  % Total    % Received % Xferd  Average Speed   Time    Time     Time">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.aiwaner.cn/istio-1-env-prepare.html">
+
+
+
+
+<meta name="baidu-site-verification" content="HSZDfuDV5vJsChTx">
+<meta name="google-site-verification" content="xlqg-trb0NI4UrO-kLvMhyPYGZSSSzFMDe0SoFRWkII">
+
+  <title>istio实践 - 环境准备 | Jasper's Blog</title>
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-137043198-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?91e4f1824e2528b40204307bacc7356d";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+   
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Jasper's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description"></h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://www.aiwaner.cn/istio-1-env-prepare.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jasper">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="https://avatars2.githubusercontent.com/u/7664221?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Jasper's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">istio实践 - 环境准备</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-25T10:35:24+08:00">
+                2019-03-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Istio/" itemprop="url" rel="index">
+                    <span itemprop="name">Istio</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/istio-1-env-prepare.html#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="istio-1-env-prepare.html" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-eye"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="下载-amp-安装-Istio-发布包"><a href="#下载-amp-安装-Istio-发布包" class="headerlink" title="下载&amp;安装 Istio 发布包"></a>下载&amp;安装 Istio 发布包</h3><h4 id="下载和自动解压缩istio安装文件"><a href="#下载和自动解压缩istio安装文件" class="headerlink" title="下载和自动解压缩istio安装文件"></a>下载和自动解压缩istio安装文件</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">$ curl -L https://git.io/getLatestIstio | ISTIO_VERSION=1.1.0 sh -</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current</span><br><span class="line">                                 Dload  Upload   Total   Spent    Left  Speed</span><br><span class="line">  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0</span><br><span class="line">100  1631  100  1631    0     0    599      0  0:00:02  0:00:02 --:--:--  3592</span><br><span class="line">Downloading istio-1.1.0 from https://github.com/istio/istio/releases/download/1.1.0/istio-1.1.0-osx.tar.gz ...</span><br><span class="line">  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current</span><br><span class="line">                                 Dload  Upload   Total   Spent    Left  Speed</span><br><span class="line">100   612    0   612    0     0    425      0 --:--:--  0:00:01 --:--:--   425</span><br><span class="line">100 14.8M  100 14.8M    0     0   326k      0  0:00:46  0:00:46 --:--:--  573k</span><br><span class="line">Downloaded into istio-1.1.0:</span><br><span class="line">LICENSE		README.md	bin		install		istio.VERSION	samples		tools</span><br><span class="line">Add /Users/sipeng.zhu/work_tools/istio/istio-1.1.0/bin to your path; e.g copy paste in your shell and/or ~/.profile:</span><br><span class="line">export PATH=&quot;$PATH:/Users/sipeng.zhu/work_tools/istio/istio-1.1.0/bin&quot;</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+<h4 id="进入-Istio-包目录。例如，假设这个包是-istio-1-1-0-0："><a href="#进入-Istio-包目录。例如，假设这个包是-istio-1-1-0-0：" class="headerlink" title="进入 Istio 包目录。例如，假设这个包是 istio-1.1.0.0："></a>进入 Istio 包目录。例如，假设这个包是 istio-1.1.0.0：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ cd istio-1.1.0</span><br></pre></td></tr></table></figure>
+<h4 id="安装目录中包含："><a href="#安装目录中包含：" class="headerlink" title="安装目录中包含："></a>安装目录中包含：</h4><blockquote>
+<ul>
+<li>在 install/ 目录中包含了 Kubernetes 安装所需的 .yaml 文件</li>
+<li>samples/ 目录中是示例应用</li>
+<li>istioctl 客户端文件保存在 bin/ 目录之中。istioctl 的功能是手工进行 Envoy Sidecar 的注入。</li>
+<li>istio.VERSION 配置文件</li>
+</ul>
+</blockquote>
+<h4 id="把-istioctl-客户端加入-PATH-环境变量，"><a href="#把-istioctl-客户端加入-PATH-环境变量，" class="headerlink" title="把 istioctl 客户端加入 PATH 环境变量，"></a>把 istioctl 客户端加入 PATH 环境变量，</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ export PATH=$PWD/bin:$PATH</span><br></pre></td></tr></table></figure>
+<h3 id="使用homebrew安装kubectl"><a href="#使用homebrew安装kubectl" class="headerlink" title="使用homebrew安装kubectl"></a>使用homebrew安装kubectl</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ brew install kubernetes-cli</span><br><span class="line">$ kubectl version</span><br><span class="line">Client Version: version.Info&#123;Major:&quot;1&quot;, Minor:&quot;13&quot;, GitVersion:&quot;v1.13.4&quot;, GitCommit:&quot;c27b913fddd1a6c480c229191a087698aa92f0b1&quot;, GitTreeState:&quot;clean&quot;, BuildDate:&quot;2019-03-01T23:36:43Z&quot;, GoVersion:&quot;go1.12&quot;, Compiler:&quot;gc&quot;, Platform:&quot;darwin/amd64&quot;&#125;</span><br><span class="line">Server Version: version.Info&#123;Major:&quot;1&quot;, Minor:&quot;13&quot;, GitVersion:&quot;v1.13.4&quot;, GitCommit:&quot;c27b913fddd1a6c480c229191a087698aa92f0b1&quot;, GitTreeState:&quot;clean&quot;, BuildDate:&quot;2019-02-28T13:30:26Z&quot;, GoVersion:&quot;go1.11.5&quot;, Compiler:&quot;gc&quot;, Platform:&quot;linux/amd64&quot;&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="安装virtualbox"><a href="#安装virtualbox" class="headerlink" title="安装virtualbox"></a>安装virtualbox</h3><p><a href="https://www.virtualbox.org/wiki/Downloads" target="_blank" rel="noopener">https://www.virtualbox.org/wiki/Downloads</a></p>
+<h3 id="安装Minikube"><a href="#安装Minikube" class="headerlink" title="安装Minikube"></a>安装Minikube</h3><h4 id="使用homebrew安"><a href="#使用homebrew安" class="headerlink" title="使用homebrew安"></a>使用homebrew安</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ brew cask install minikube</span><br><span class="line">...</span><br><span class="line">🍺  minikube was successfully installed!</span><br></pre></td></tr></table></figure>
+<h4 id="启动minikube"><a href="#启动minikube" class="headerlink" title="启动minikube"></a>启动minikube</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ minikube start --memory=8192 --cpus=4 --kubernetes-version=v1.13.0 \</span><br><span class="line">    --vm-driver=`VirtualBox`</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">😄  minikube v0.35.0 on darwin (amd64)</span><br><span class="line">💡  Tip: Use &apos;minikube start -p &lt;name&gt;&apos; to create a new cluster, or &apos;minikube delete&apos; to delete this one.</span><br><span class="line">🔄  Restarting existing virtualbox VM for &quot;minikube&quot; ...</span><br><span class="line">⌛  Waiting for SSH access ...</span><br><span class="line">📶  &quot;minikube&quot; IP address is 192.168.99.100</span><br><span class="line">🐳  Configuring Docker as the container runtime ...</span><br><span class="line">✨  Preparing Kubernetes environment ...</span><br><span class="line">🚜  Pulling images required by Kubernetes v1.13.4 ...</span><br><span class="line">🔄  Relaunching Kubernetes v1.13.4 using kubeadm ...</span><br><span class="line">⌛  Waiting for pods: apiserver proxy etcd scheduler controller addon-manager dns</span><br><span class="line">📯  Updating kube-proxy configuration ...</span><br><span class="line">🤔  Verifying component health ......</span><br><span class="line">💗  kubectl is now configured to use &quot;minikube&quot;</span><br><span class="line">🏄  Done! Thank you for using minikube!</span><br></pre></td></tr></table></figure>
+<h4 id="查看minikube状态"><a href="#查看minikube状态" class="headerlink" title="查看minikube状态"></a>查看minikube状态</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ minikube status</span><br><span class="line">...</span><br><span class="line">host: Running</span><br><span class="line">kubelet: Running</span><br><span class="line">apiserver: Running</span><br><span class="line">kubectl: Correctly Configured: pointing to minikube-vm at 192.168.99.100</span><br></pre></td></tr></table></figure>
+<h3 id="在-Kubernetes-中快速开始"><a href="#在-Kubernetes-中快速开始" class="headerlink" title="在 Kubernetes 中快速开始"></a>在 Kubernetes 中快速开始</h3><h4 id="使用-kubectl-apply-安装-Istio-的自定义资源定义（CRD）"><a href="#使用-kubectl-apply-安装-Istio-的自定义资源定义（CRD）" class="headerlink" title="使用 kubectl apply 安装 Istio 的自定义资源定义（CRD）"></a>使用 kubectl apply 安装 Istio 的自定义资源定义（CRD）</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ for i in install/kubernetes/helm/istio-init/files/crd*yaml; do kubectl apply -f $i; done</span><br></pre></td></tr></table></figure>
+<h4 id="使用-mutual-TLS-的宽容模式安装"><a href="#使用-mutual-TLS-的宽容模式安装" class="headerlink" title="使用 mutual TLS 的宽容模式安装"></a>使用 mutual TLS 的宽容模式安装</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl apply -f install/kubernetes/istio-demo.yaml</span><br></pre></td></tr></table></figure>
+<h3 id="确认部署结果"><a href="#确认部署结果" class="headerlink" title="确认部署结果"></a>确认部署结果</h3><h4 id="确认下列-Kubernetes-服务已经部署并都具有各自的-CLUSTER-IP："><a href="#确认下列-Kubernetes-服务已经部署并都具有各自的-CLUSTER-IP：" class="headerlink" title="确认下列 Kubernetes 服务已经部署并都具有各自的 CLUSTER-IP："></a>确认下列 Kubernetes 服务已经部署并都具有各自的 CLUSTER-IP：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get svc -n istio-system</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">NAME                     TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                                                                                                                                      AGE</span><br><span class="line">grafana                  ClusterIP      10.104.12.220    &lt;none&gt;        3000/TCP                                                                                                                                     17h</span><br><span class="line">istio-citadel            ClusterIP      10.102.110.82    &lt;none&gt;        8060/TCP,15014/TCP                                                                                                                           17h</span><br><span class="line">istio-egressgateway      ClusterIP      10.105.70.166    &lt;none&gt;        80/TCP,443/TCP,15443/TCP                                                                                                                     17h</span><br><span class="line">istio-galley             ClusterIP      10.97.151.94     &lt;none&gt;        443/TCP,15014/TCP,9901/TCP                                                                                                                   17h</span><br><span class="line">istio-ingressgateway     LoadBalancer   10.104.89.245    &lt;pending&gt;     80:31380/TCP,443:31390/TCP,31400:31400/TCP,15029:31225/TCP,15030:30228/TCP,15031:31039/TCP,15032:30667/TCP,15443:31626/TCP,15020:30118/TCP   17h</span><br><span class="line">istio-pilot              ClusterIP      10.102.83.181    &lt;none&gt;        15010/TCP,15011/TCP,8080/TCP,15014/TCP                                                                                                       17h</span><br><span class="line">istio-policy             ClusterIP      10.98.102.117    &lt;none&gt;        9091/TCP,15004/TCP,15014/TCP                                                                                                                 17h</span><br><span class="line">istio-sidecar-injector   ClusterIP      10.109.199.161   &lt;none&gt;        443/TCP                                                                                                                                      17h</span><br><span class="line">istio-telemetry          ClusterIP      10.101.8.184     &lt;none&gt;        9091/TCP,15004/TCP,15014/TCP,42422/TCP</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>因为我们使用的集群是Minikube （没有外部负载均衡器支持的环境中运行），istio-ingressgateway 的 EXTERNAL-IP 会是 <pending>。要访问这个网关，只能通过服务的 NodePort 或者使用端口转发来进行访问。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">minikube service -n istio-system istio-ingressgateway</span><br></pre></td></tr></table></figure></pending></p>
+</blockquote>
+<h4 id="确认必要的-Kubernetes-Pod-都已经创建并且其-STATUS-的值是-Running："><a href="#确认必要的-Kubernetes-Pod-都已经创建并且其-STATUS-的值是-Running：" class="headerlink" title="确认必要的 Kubernetes Pod 都已经创建并且其 STATUS 的值是 Running："></a>确认必要的 Kubernetes Pod 都已经创建并且其 STATUS 的值是 Running：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get pods -n istio-system</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">NAME                                      READY   STATUS      RESTARTS   AGE</span><br><span class="line">grafana-57586c685b-9rnfb                  1/1     Running     1          11m</span><br><span class="line">istio-citadel-645ffc4999-tlpx2            1/1     Running     1          11m</span><br><span class="line">istio-cleanup-secrets-1.1.0-d2nr4         0/1     Completed   0          11m</span><br><span class="line">istio-cleanup-secrets-9rjtg               0/1     Completed   0          33m</span><br><span class="line">istio-egressgateway-5c7fd57fdb-ctx2l      1/1     Running     1          11m</span><br><span class="line">istio-galley-978f9447f-sg7ls              1/1     Running     2          11m</span><br><span class="line">istio-grafana-post-install-1.1.0-7p49p    0/1     Completed   0          11m</span><br><span class="line">istio-ingressgateway-8ccdc79bc-jbvz5      1/1     Running     1          11m</span><br><span class="line">istio-pilot-649455846-k6v49               2/2     Running     0          11m</span><br><span class="line">istio-policy-7b7d7f644b-lmkb5             2/2     Running     4          11m</span><br><span class="line">istio-security-post-install-1.1.0-qxqs6   0/1     Completed   0          11m</span><br><span class="line">istio-sidecar-injector-6dcc9d5c64-gctbh   1/1     Running     2          11m</span><br><span class="line">istio-telemetry-6d494cd676-7phwq          2/2     Running     4          11m</span><br><span class="line">istio-tracing-656f9fc99c-fm8ft            1/1     Running     1          11m</span><br><span class="line">kiali-69d6978b45-69g7d                    1/1     Running     1          11m</span><br><span class="line">prometheus-66c9f5694-l6qn8                1/1     Running     1          11m</span><br><span class="line">servicegraph-cb9b94c-qn5mk                1/1     Running     12         33m</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>Donate comment here</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="https://github.com/ja3per/ja3per.github.io/blob/master/pay-wechat.png?raw=true" alt="Jasper 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="https://github.com/ja3per/ja3per.github.io/blob/master/pay-ali.png?raw=true" alt="Jasper 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Istio/" rel="tag"># Istio</a>
+          
+            <a href="/tags/service-mesh/" rel="tag"># service mesh</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/hello-world.html" rel="prev" title="Hello World">
+                Hello World <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="https://avatars2.githubusercontent.com/u/7664221?s=460&v=4" alt="Jasper">
+            
+              <p class="site-author-name" itemprop="name">Jasper</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">9</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/ja3per" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="mailto:sp2g88@gmail.com" target="_blank" title="E-Mail">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#下载-amp-安装-Istio-发布包"><span class="nav-number">1.</span> <span class="nav-text">下载&amp;安装 Istio 发布包</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#下载和自动解压缩istio安装文件"><span class="nav-number">1.1.</span> <span class="nav-text">下载和自动解压缩istio安装文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#进入-Istio-包目录。例如，假设这个包是-istio-1-1-0-0："><span class="nav-number">1.2.</span> <span class="nav-text">进入 Istio 包目录。例如，假设这个包是 istio-1.1.0.0：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#安装目录中包含："><span class="nav-number">1.3.</span> <span class="nav-text">安装目录中包含：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#把-istioctl-客户端加入-PATH-环境变量，"><span class="nav-number">1.4.</span> <span class="nav-text">把 istioctl 客户端加入 PATH 环境变量，</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用homebrew安装kubectl"><span class="nav-number">2.</span> <span class="nav-text">使用homebrew安装kubectl</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安装virtualbox"><span class="nav-number">3.</span> <span class="nav-text">安装virtualbox</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安装Minikube"><span class="nav-number">4.</span> <span class="nav-text">安装Minikube</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#使用homebrew安"><span class="nav-number">4.1.</span> <span class="nav-text">使用homebrew安</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#启动minikube"><span class="nav-number">4.2.</span> <span class="nav-text">启动minikube</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#查看minikube状态"><span class="nav-number">4.3.</span> <span class="nav-text">查看minikube状态</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#在-Kubernetes-中快速开始"><span class="nav-number">5.</span> <span class="nav-text">在 Kubernetes 中快速开始</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#使用-kubectl-apply-安装-Istio-的自定义资源定义（CRD）"><span class="nav-number">5.1.</span> <span class="nav-text">使用 kubectl apply 安装 Istio 的自定义资源定义（CRD）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用-mutual-TLS-的宽容模式安装"><span class="nav-number">5.2.</span> <span class="nav-text">使用 mutual TLS 的宽容模式安装</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#确认部署结果"><span class="nav-number">6.</span> <span class="nav-text">确认部署结果</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#确认下列-Kubernetes-服务已经部署并都具有各自的-CLUSTER-IP："><span class="nav-number">6.1.</span> <span class="nav-text">确认下列 Kubernetes 服务已经部署并都具有各自的 CLUSTER-IP：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#确认必要的-Kubernetes-Pod-都已经创建并且其-STATUS-的值是-Running："><span class="nav-number">6.2.</span> <span class="nav-text">确认必要的 Kubernetes Pod 都已经创建并且其 STATUS 的值是 Running：</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2015 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jasper</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="http://hexo.io" rel="external nofollow">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next" rel="external nofollow">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://ja3per.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.aiwaner.cn/istio-1-env-prepare.html';
+          this.page.identifier = 'istio-1-env-prepare.html';
+          this.page.title = 'istio实践 - 环境准备';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://ja3per.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

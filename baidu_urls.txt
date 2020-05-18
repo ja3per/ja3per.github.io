@@ -1,0 +1,10 @@
+http://www.aiwaner.cn/singapore-shopee.html
+http://www.aiwaner.cn/postman-part2-mock-server.html
+http://www.aiwaner.cn/postman-part1-documentation.html
+http://www.aiwaner.cn/istio-4-security.html
+http://www.aiwaner.cn/istio-3.2-traffic-management-part2.html
+http://www.aiwaner.cn/istio-3.1-traffic-management-part1.html
+http://www.aiwaner.cn/setting-up-blog-with-hexo-github-pages.html
+http://www.aiwaner.cn/istio-2-bookinfo-example.html
+http://www.aiwaner.cn/hello-world.html
+http://www.aiwaner.cn/istio-1-env-prepare.html

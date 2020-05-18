@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Istio,service mesh,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="配置请求路由规则配置Istio 中包含有四种流量管理配置资源，分别是 VirtualService、DestinationRule、ServiceEntry 以及 Gateway。下面会讲一下这几个资源的一些重点。在网络参考中可以获得更多这方面的信息。   VirtualService 在 Istio 服务网格中定义路由规则，控制路由如何路由到服务上。  DestinationRule 是 Vir">
+<meta name="keywords" content="Istio,service mesh">
+<meta property="og:type" content="article">
+<meta property="og:title" content="istio实践 - 流量管理 - part1">
+<meta property="og:url" content="http://www.aiwaner.cn/istio-3.1-traffic-management-part1.html">
+<meta property="og:site_name" content="Jasper&#39;s Blog">
+<meta property="og:description" content="配置请求路由规则配置Istio 中包含有四种流量管理配置资源，分别是 VirtualService、DestinationRule、ServiceEntry 以及 Gateway。下面会讲一下这几个资源的一些重点。在网络参考中可以获得更多这方面的信息。   VirtualService 在 Istio 服务网格中定义路由规则，控制路由如何路由到服务上。  DestinationRule 是 Vir">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-03-29T06:21:04.611Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="istio实践 - 流量管理 - part1">
+<meta name="twitter:description" content="配置请求路由规则配置Istio 中包含有四种流量管理配置资源，分别是 VirtualService、DestinationRule、ServiceEntry 以及 Gateway。下面会讲一下这几个资源的一些重点。在网络参考中可以获得更多这方面的信息。   VirtualService 在 Istio 服务网格中定义路由规则，控制路由如何路由到服务上。  DestinationRule 是 Vir">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.aiwaner.cn/istio-3.1-traffic-management-part1.html">
+
+
+
+
+<meta name="baidu-site-verification" content="HSZDfuDV5vJsChTx">
+<meta name="google-site-verification" content="xlqg-trb0NI4UrO-kLvMhyPYGZSSSzFMDe0SoFRWkII">
+
+  <title>istio实践 - 流量管理 - part1 | Jasper's Blog</title>
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-137043198-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?91e4f1824e2528b40204307bacc7356d";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+   
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Jasper's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description"></h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://www.aiwaner.cn/istio-3.1-traffic-management-part1.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jasper">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="https://avatars2.githubusercontent.com/u/7664221?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Jasper's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">istio实践 - 流量管理 - part1</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-27T15:35:24+08:00">
+                2019-03-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Istio/" itemprop="url" rel="index">
+                    <span itemprop="name">Istio</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/istio-3.1-traffic-management-part1.html#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="istio-3.1-traffic-management-part1.html" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-eye"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="配置请求路由"><a href="#配置请求路由" class="headerlink" title="配置请求路由"></a>配置请求路由</h3><h4 id="规则配置"><a href="#规则配置" class="headerlink" title="规则配置"></a>规则配置</h4><p>Istio 中包含有四种流量管理配置资源，分别是 VirtualService、DestinationRule、ServiceEntry 以及 Gateway。下面会讲一下这几个资源的一些重点。在网络参考中可以获得更多这方面的信息。</p>
+<blockquote>
+<ul>
+<li><p><strong>VirtualService</strong> 在 Istio 服务网格中定义路由规则，控制路由如何路由到服务上。</p>
+</li>
+<li><p><strong>DestinationRule</strong> 是 VirtualService 路由生效后，配置应用与请求的策略集。</p>
+</li>
+<li><p><strong>ServiceEntry</strong> 是通常用于在 Istio 服务网格之外启用对服务的请求。</p>
+</li>
+<li><p><strong>Gateway</strong> 为 HTTP/TCP 流量配置负载均衡器，最常见的是在网格的边缘的操作，以启用应用程序的入口流量。</p>
+</li>
+</ul>
+</blockquote>
+<h4 id="应用-virtual-service"><a href="#应用-virtual-service" class="headerlink" title="应用 virtual service"></a>应用 virtual service</h4><p>运行以下命令以应用 virtual service, 将流量路由到一个版本(v1)的服务。：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f samples/bookinfo/networking/virtual-service-all-v1.yaml</span><br><span class="line"></span><br><span class="line">virtualservice.networking.istio.io/productpage created</span><br><span class="line">virtualservice.networking.istio.io/reviews created</span><br><span class="line">virtualservice.networking.istio.io/ratings created</span><br><span class="line">virtualservice.networking.istio.io/details created</span><br></pre></td></tr></table></figure></p>
+<h4 id="测试新的路由配置："><a href="#测试新的路由配置：" class="headerlink" title="测试新的路由配置："></a>测试新的路由配置：</h4><p>在浏览器中打开 Bookinfo 站点。 URL 为 http://$GATEWAY_URL/productpage，其中 GATEWAY_URL 是外部的入口 IP 地址，如 Bookinfo 文档中所述。</p>
+<p>请注意，无论您刷新多少次，页面的评论部分都不会显示评级星标。这是因为您将 Istio 配置为将评论服务的所有流量路由到版本 reviews:v1，并且此版本的服务不访问星级评分服务。<br><a id="more"></a></p>
+<h4 id="基于用户身份的路由"><a href="#基于用户身份的路由" class="headerlink" title="基于用户身份的路由"></a>基于用户身份的路由</h4><p>更改路由配置，将来自特定用户的所有流量路由到特定服务版本。<br>在这种情况下，来自名为 Jason 的用户的所有流量将被路由到服务 reviews:v2（包含星级评分功能的版本）。</p>
+<ol>
+<li><p>运行以下命令以启用基于用户的路由：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f samples/bookinfo/networking/virtual-service-reviews-test-v2.yaml</span><br><span class="line"></span><br><span class="line">virtualservice.networking.istio.io/reviews configured</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>确认规则已创建：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">kubectl get virtualservice reviews -o yaml</span><br><span class="line"></span><br><span class="line"> apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">    kind: VirtualService</span><br><span class="line">    metadata:</span><br><span class="line">      name: reviews</span><br><span class="line">      ...</span><br><span class="line">    spec:</span><br><span class="line">      hosts:</span><br><span class="line">      - reviews</span><br><span class="line">      http:</span><br><span class="line">      - match:</span><br><span class="line">        - headers:</span><br><span class="line">            end-user:</span><br><span class="line">              exact: jason</span><br><span class="line">        route:</span><br><span class="line">        - destination:</span><br><span class="line">            host: reviews</span><br><span class="line">            subset: v2</span><br><span class="line">      - route:</span><br><span class="line">        - destination:</span><br><span class="line">            host: reviews</span><br><span class="line">            subset: v1</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>刷新Bookinfo 站点， 以jason用户登录，发现星级评分显示在每个评论旁边。</p>
+</li>
+<li>点击右上角的sign out，发现星级评分消失了。</li>
+</ol>
+<h4 id="理解原理"><a href="#理解原理" class="headerlink" title="理解原理"></a>理解原理</h4><p>在此任务中，您首先使用 Istio 将 100% 的请求流量都路由到了 Bookinfo 服务的 v1 版本。 然后再设置了一条路由规则，在 productpage 服务中添加了路由规则，这一规则根据请求的 end-user 自定义 header 内容，选择性地将特定的流量路由到了 reviews 服务的 v2 版本。</p>
+<h4 id="清除"><a href="#清除" class="headerlink" title="清除"></a>清除</h4><p>删除应用程序 virtual service。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl delete -f samples/bookinfo/networking/virtual-service-all-v1.yaml</span><br></pre></td></tr></table></figure></p>
+<h3 id="故障注入"><a href="#故障注入" class="headerlink" title="故障注入"></a>故障注入</h3><h4 id="使用-HTTP-延迟进行故障注入"><a href="#使用-HTTP-延迟进行故障注入" class="headerlink" title="使用 HTTP 延迟进行故障注入"></a>使用 HTTP 延迟进行故障注入</h4><ol>
+<li><p>创建故障注入规则以延迟来自用户 jason（我们的测试用户）的流量</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f samples/bookinfo/networking/virtual-service-ratings-test-delay.yaml</span><br><span class="line"></span><br><span class="line">virtualservice.networking.istio.io/ratings configured</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>确认已创建规则：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">kubectl get virtualservice ratings -o yaml</span><br><span class="line"></span><br><span class="line">   apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">    kind: VirtualService</span><br><span class="line">    metadata:</span><br><span class="line">      name: ratings</span><br><span class="line">      ...</span><br><span class="line">    spec:</span><br><span class="line">      hosts:</span><br><span class="line">      - ratings</span><br><span class="line">      http:</span><br><span class="line">      - fault:</span><br><span class="line">          delay:</span><br><span class="line">            fixedDelay: 7s</span><br><span class="line">            percent: 100</span><br><span class="line">        match:</span><br><span class="line">        - headers:</span><br><span class="line">            end-user:</span><br><span class="line">              exact: jason</span><br><span class="line">        route:</span><br><span class="line">        - destination:</span><br><span class="line">            host: ratings</span><br><span class="line">            subset: v1</span><br><span class="line">      - route:</span><br><span class="line">        - destination:</span><br><span class="line">            host: ratings</span><br><span class="line">            subset: v1</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>验证<br>使用用户 jason 登陆到 /productpage 界面</p>
+<blockquote>
+<p>Bookinfo 主页在大约 7 秒钟加载完成并且没有错误。但是，出现了一个问题，Reviews 部分显示了错误消息。在微服务中有硬编码超时，导致 reviews 服务失败。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Error fetching product reviews!</span><br><span class="line">    Sorry, product reviews are currently unavailable for this book.</span><br></pre></td></tr></table></figure>
+</blockquote>
+</li>
+</ol>
+<h4 id="使用-HTTP-abort-进行故障注入"><a href="#使用-HTTP-abort-进行故障注入" class="headerlink" title="使用 HTTP abort 进行故障注入"></a>使用 HTTP abort 进行故障注入</h4><ol>
+<li><p>为用户 jason 创建故障注入规则发送 HTTP abort</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f samples/bookinfo/networking/virtual-service-ratings-test-abort.yaml</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>确认已创建规则</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">kubectl get virtualservice ratings -o yaml</span><br><span class="line"></span><br><span class="line">    apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">    kind: VirtualService</span><br><span class="line">    metadata:</span><br><span class="line">      name: ratings</span><br><span class="line">      ...</span><br><span class="line">    spec:</span><br><span class="line">      hosts:</span><br><span class="line">      - ratings</span><br><span class="line">      http:</span><br><span class="line">      - fault:</span><br><span class="line">          abort:</span><br><span class="line">            httpStatus: 500</span><br><span class="line">            percent: 100</span><br><span class="line">        match:</span><br><span class="line">        - headers:</span><br><span class="line">            end-user:</span><br><span class="line">              exact: jason</span><br><span class="line">        route:</span><br><span class="line">        - destination:</span><br><span class="line">            host: ratings</span><br><span class="line">            subset: v1</span><br><span class="line">      - route:</span><br><span class="line">        - destination:</span><br><span class="line">            host: ratings</span><br><span class="line">            subset: v1</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>验证abort配置</p>
+<blockquote>
+<p>使用用户 jason 登陆到 /productpage 界面<br>页面立即加载并看到 Ratings service is currently unavailable 消息</p>
+</blockquote>
+</li>
+</ol>
+<h3 id="流量转移"><a href="#流量转移" class="headerlink" title="流量转移"></a>流量转移</h3><h4 id="应用基于权重的路由"><a href="#应用基于权重的路由" class="headerlink" title="应用基于权重的路由"></a>应用基于权重的路由</h4><ol>
+<li><p>首先，运行此命令将所有流量路由到 v1 版本的各个微服务。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f samples/bookinfo/networking/virtual-service-all-v1.yaml</span><br><span class="line"></span><br><span class="line">virtualservice.networking.istio.io/productpage unchanged</span><br><span class="line">virtualservice.networking.istio.io/reviews configured</span><br><span class="line">virtualservice.networking.istio.io/ratings configured</span><br><span class="line">virtualservice.networking.istio.io/details unchanged</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用下面的命令把 50% 的流量从 reviews:v1 转移到 reviews:v3：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f samples/bookinfo/networking/virtual-service-reviews-50-v3.yaml</span><br><span class="line"></span><br><span class="line">virtualservice.networking.istio.io/reviews configured</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>确认规则</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">kubectl get virtualservice reviews -o yaml</span><br><span class="line"> apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">    kind: VirtualService</span><br><span class="line">    metadata:</span><br><span class="line">      name: reviews</span><br><span class="line">      ...</span><br><span class="line">    spec:</span><br><span class="line">      hosts:</span><br><span class="line">      - reviews</span><br><span class="line">      http:</span><br><span class="line">      - route:</span><br><span class="line">        - destination:</span><br><span class="line">            host: reviews</span><br><span class="line">            subset: v1</span><br><span class="line">          weight: 50</span><br><span class="line">        - destination:</span><br><span class="line">            host: reviews</span><br><span class="line">            subset: v3</span><br><span class="line">          weight: 50</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>验证<br>刷新浏览器中的 /productpage 页面，大约有 50% 的几率会看到页面中出带红色星级的评价内容</p>
+</li>
+<li><p>全流量转移<br>如果您认为 reviews:v3 微服务已经稳定，你可以通过应用此 virtual service 将 100% 的流量路由到 reviews:v3：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f samples/bookinfo/networking/virtual-service-reviews-v3.yaml</span><br><span class="line"></span><br><span class="line">virtualservice.networking.istio.io/reviews configured</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>验证<br>多次刷新 /productpage 页面，始终看到带有红色星级评分的书评。</p>
+</li>
+</ol>
+<h3 id="控制-Ingress-流量"><a href="#控制-Ingress-流量" class="headerlink" title="控制 Ingress 流量"></a>控制 Ingress 流量</h3><p>配置 Istio 以使用 Istio 在服务网格外部公开服务 Gateway。</p>
+<h4 id="启动-httpbin-样本，该样本将用作要在外部公开的目标服务。"><a href="#启动-httpbin-样本，该样本将用作要在外部公开的目标服务。" class="headerlink" title="启动 httpbin 样本，该样本将用作要在外部公开的目标服务。"></a>启动 httpbin 样本，该样本将用作要在外部公开的目标服务。</h4><p>手动注入 Sidecar：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">⇒  kubectl apply -f samples/httpbin/httpbin.yaml</span><br><span class="line">service/httpbin created</span><br></pre></td></tr></table></figure></p>
+<h4 id="使用-Istio-网关配置-Ingress"><a href="#使用-Istio-网关配置-Ingress" class="headerlink" title="使用 Istio 网关配置 Ingress"></a>使用 Istio 网关配置 Ingress</h4><p>Ingress Gateway 描述了在网格边缘操作的负载平衡器，用于接收传入的 HTTP/TCP 连接。它配置暴露的端口、协议等，但与 Kubernetes Ingress Resources 不同，它不包括任何流量路由配置。流入流量的流量路由使用 Istio 路由规则进行配置，与内部服务请求完全相同。</p>
+<ol>
+<li><p>创建一个 Istio Gateway：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">⇒  kubectl apply -f - &lt;&lt;EOF</span><br><span class="line">    apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">    kind: Gateway</span><br><span class="line">    metadata:</span><br><span class="line">      name: httpbin-gateway</span><br><span class="line">    spec:</span><br><span class="line">      selector:</span><br><span class="line">        istio: ingressgateway # use Istio default gateway implementation</span><br><span class="line">      servers:</span><br><span class="line">      - port:</span><br><span class="line">          number: 80</span><br><span class="line">          name: http</span><br><span class="line">          protocol: HTTP</span><br><span class="line">        hosts:</span><br><span class="line">        - &quot;httpbin.example.com&quot;</span><br><span class="line">heredoc&gt; EOF</span><br><span class="line">gateway.networking.istio.io/httpbin-gateway created</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>为通过 Gateway 进入的流量配置路由：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">⇒  kubectl apply -f - &lt;&lt;EOF</span><br><span class="line">    apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">    kind: VirtualService</span><br><span class="line">    metadata:</span><br><span class="line">      name: httpbin</span><br><span class="line">    spec:</span><br><span class="line">      hosts:</span><br><span class="line">      - &quot;httpbin.example.com&quot;</span><br><span class="line">      gateways:</span><br><span class="line">      - httpbin-gateway</span><br><span class="line">      http:</span><br><span class="line">      - match:</span><br><span class="line">        - uri:</span><br><span class="line">            prefix: /status</span><br><span class="line">        - uri:</span><br><span class="line">            prefix: /delay</span><br><span class="line">        route:</span><br><span class="line">        - destination:</span><br><span class="line">            port:</span><br><span class="line">              number: 8000</span><br><span class="line">            host: httpbin</span><br><span class="line">heredoc&gt; EOF</span><br><span class="line">virtualservice.networking.istio.io/httpbin created</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<blockquote>
+<p>在这里，我们为服务创建了一个虚拟服务配置 httpbin ，其中包含两条路由规则，允许路径 /status 和 路径的流量 /delay。</p>
+<p>该网关列表指定，只有通过我们的要求 httpbin-gateway 是允许的。所有其他外部请求将被拒绝，并返回 404 响应。</p>
+<p>请注意，在此配置中，来自网格中其他服务的内部请求不受这些规则约束，而是简单地默认为循环路由。要将这些（或其他规则）应用于内部调用，我们可以将特殊值 mesh 添加到 gateways 的列表中。</p>
+<ol start="3">
+<li>使用 curl 访问 httpbin 服务<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">⇒  curl -I -HHost:httpbin.example.com http://$INGRESS_HOST:$INGRESS_PORT/status/200</span><br><span class="line"></span><br><span class="line">HTTP/1.1 200 OK</span><br><span class="line">server: istio-envoy</span><br><span class="line">date: Thu, 28 Mar 2019 02:51:29 GMT</span><br><span class="line">content-type: text/html; charset=utf-8</span><br><span class="line">access-control-allow-origin: *</span><br><span class="line">access-control-allow-credentials: true</span><br><span class="line">content-length: 0</span><br><span class="line">x-envoy-upstream-service-time: 2</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+</blockquote>
+<blockquote>
+<p>请注意，这里使用该 -H 标志将 Host HTTP Header 设置为 “httpbin.example.com”。这一操作是必需的，因为上面的 Ingress Gateway 被配置为处理 “httpbin.example.com”，但在测试环境中没有该主机的 DNS 绑定，只是将请求发送到 Ingress IP。</p>
+<ol start="4">
+<li>访问任何未明确公开的其他 URL，应该会看到一个 HTTP 404 错误：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">⇒  curl -I -HHost:httpbin.example.com http://$INGRESS_HOST:$INGRESS_PORT/headers</span><br><span class="line"></span><br><span class="line">HTTP/1.1 404 Not Found</span><br><span class="line">date: Thu, 28 Mar 2019 02:52:31 GMT</span><br><span class="line">server: istio-envoy</span><br><span class="line">transfer-encoding: chunked</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+</blockquote>
+<h4 id="使用浏览器访问-Ingress-服务"><a href="#使用浏览器访问-Ingress-服务" class="headerlink" title="使用浏览器访问 Ingress 服务"></a>使用浏览器访问 Ingress 服务</h4><p>在浏览器中输入 httpbin 服务的地址是不会生效的，这是因为因为我们没有办法让浏览器像 curl 一样装作访问 httpbin.example.com。而在现实世界中，因为有正常配置的主机和 DNS 记录，这种做法就能够成功了——只要简单的在浏览器中访问由域名构成的 URL 即可，例如 <a href="https://httpbin.example.com/status/200。" target="_blank" rel="noopener">https://httpbin.example.com/status/200。</a></p>
+<p>要解决此问题以进行简单的测试和演示，我们可以在 Gateway 和 VirtualService 配置中为主机使用通配符值 *。例如，如果我们将 Ingress 配置更改为以下内容：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">⇒ kubectl apply -f - &lt;&lt;EOF</span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: Gateway</span><br><span class="line">metadata:</span><br><span class="line">  name: httpbin-gateway</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    istio: ingressgateway # use Istio default gateway implementation</span><br><span class="line">  servers:</span><br><span class="line">  - port:</span><br><span class="line">      number: 80</span><br><span class="line">      name: http</span><br><span class="line">      protocol: HTTP</span><br><span class="line">    hosts:</span><br><span class="line">    - &quot;*&quot;</span><br><span class="line">---</span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: VirtualService</span><br><span class="line">metadata:</span><br><span class="line">  name: httpbin</span><br><span class="line">spec:</span><br><span class="line">  hosts:</span><br><span class="line">  - &quot;*&quot;</span><br><span class="line">  gateways:</span><br><span class="line">  - httpbin-gateway</span><br><span class="line">  http:</span><br><span class="line">  - match:</span><br><span class="line">    - uri:</span><br><span class="line">        prefix: /headers</span><br><span class="line">    route:</span><br><span class="line">    - destination:</span><br><span class="line">        port:</span><br><span class="line">          number: 8000</span><br><span class="line">        host: httpbin</span><br><span class="line"></span><br><span class="line">heredoc&gt; EOF</span><br><span class="line">gateway.networking.istio.io/httpbin-gateway configured</span><br><span class="line">virtualservice.networking.istio.io/httpbin configured</span><br></pre></td></tr></table></figure>
+<p>接下来就可以在浏览器的 URL 中使$INGRESS_HOST:$INGRESS_PORT（也就是 192.168.99.100:31380）进行访问，输入 <a href="http://192.168.99.100:31380/headers" target="_blank" rel="noopener">http://192.168.99.100:31380/headers</a> 网址之后，应该会显示浏览器发送的请求 Header。</p>
+<h4 id="理解"><a href="#理解" class="headerlink" title="理解"></a>理解</h4><p>Gateway 配置资源允许外部流量进入 Istio 服务网，并使 Istio 的流量管理和策略功能可用于边缘服务。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>Donate comment here</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="https://github.com/ja3per/ja3per.github.io/blob/master/pay-wechat.png?raw=true" alt="Jasper 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="https://github.com/ja3per/ja3per.github.io/blob/master/pay-ali.png?raw=true" alt="Jasper 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Istio/" rel="tag"># Istio</a>
+          
+            <a href="/tags/service-mesh/" rel="tag"># service mesh</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/setting-up-blog-with-hexo-github-pages.html" rel="next" title="使用hexo和github Pages搭建个人博客">
+                <i class="fa fa-chevron-left"></i> 使用hexo和github Pages搭建个人博客
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/istio-3.2-traffic-management-part2.html" rel="prev" title="istio实践 - 流量管理 - part2">
+                istio实践 - 流量管理 - part2 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="https://avatars2.githubusercontent.com/u/7664221?s=460&v=4" alt="Jasper">
+            
+              <p class="site-author-name" itemprop="name">Jasper</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">9</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/ja3per" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="mailto:sp2g88@gmail.com" target="_blank" title="E-Mail">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#配置请求路由"><span class="nav-number">1.</span> <span class="nav-text">配置请求路由</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#规则配置"><span class="nav-number">1.1.</span> <span class="nav-text">规则配置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#应用-virtual-service"><span class="nav-number">1.2.</span> <span class="nav-text">应用 virtual service</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#测试新的路由配置："><span class="nav-number">1.3.</span> <span class="nav-text">测试新的路由配置：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#基于用户身份的路由"><span class="nav-number">1.4.</span> <span class="nav-text">基于用户身份的路由</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#理解原理"><span class="nav-number">1.5.</span> <span class="nav-text">理解原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#清除"><span class="nav-number">1.6.</span> <span class="nav-text">清除</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#故障注入"><span class="nav-number">2.</span> <span class="nav-text">故障注入</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#使用-HTTP-延迟进行故障注入"><span class="nav-number">2.1.</span> <span class="nav-text">使用 HTTP 延迟进行故障注入</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用-HTTP-abort-进行故障注入"><span class="nav-number">2.2.</span> <span class="nav-text">使用 HTTP abort 进行故障注入</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#流量转移"><span class="nav-number">3.</span> <span class="nav-text">流量转移</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#应用基于权重的路由"><span class="nav-number">3.1.</span> <span class="nav-text">应用基于权重的路由</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#控制-Ingress-流量"><span class="nav-number">4.</span> <span class="nav-text">控制 Ingress 流量</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#启动-httpbin-样本，该样本将用作要在外部公开的目标服务。"><span class="nav-number">4.1.</span> <span class="nav-text">启动 httpbin 样本，该样本将用作要在外部公开的目标服务。</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用-Istio-网关配置-Ingress"><span class="nav-number">4.2.</span> <span class="nav-text">使用 Istio 网关配置 Ingress</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用浏览器访问-Ingress-服务"><span class="nav-number">4.3.</span> <span class="nav-text">使用浏览器访问 Ingress 服务</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#理解"><span class="nav-number">4.4.</span> <span class="nav-text">理解</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2015 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jasper</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="http://hexo.io" rel="external nofollow">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next" rel="external nofollow">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://ja3per.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.aiwaner.cn/istio-3.1-traffic-management-part1.html';
+          this.page.identifier = 'istio-3.1-traffic-management-part1.html';
+          this.page.title = 'istio实践 - 流量管理 - part1';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://ja3per.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

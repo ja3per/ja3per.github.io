@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Istio,service mesh,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="控制 Egress 流量默认情况下，Istio 服务网格内的 Pod，由于其 iptables 将所有外发流量都透明的转发给了 Sidecar，所以这些集群内的服务无法访问集群之外的 URL，而只能处理集群内部的目标。 本文的任务描述了如何将外部服务暴露给 Istio 集群中的客户端。你将会学到如何通过定义 ServiceEntry 来调用外部服务；或者简单的对 Istio 进行配置，要求其直接放">
+<meta name="keywords" content="Istio,service mesh">
+<meta property="og:type" content="article">
+<meta property="og:title" content="istio实践 - 流量管理 - part2">
+<meta property="og:url" content="http://www.aiwaner.cn/istio-3.2-traffic-management-part2.html">
+<meta property="og:site_name" content="Jasper&#39;s Blog">
+<meta property="og:description" content="控制 Egress 流量默认情况下，Istio 服务网格内的 Pod，由于其 iptables 将所有外发流量都透明的转发给了 Sidecar，所以这些集群内的服务无法访问集群之外的 URL，而只能处理集群内部的目标。 本文的任务描述了如何将外部服务暴露给 Istio 集群中的客户端。你将会学到如何通过定义 ServiceEntry 来调用外部服务；或者简单的对 Istio 进行配置，要求其直接放">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-03-29T06:51:02.627Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="istio实践 - 流量管理 - part2">
+<meta name="twitter:description" content="控制 Egress 流量默认情况下，Istio 服务网格内的 Pod，由于其 iptables 将所有外发流量都透明的转发给了 Sidecar，所以这些集群内的服务无法访问集群之外的 URL，而只能处理集群内部的目标。 本文的任务描述了如何将外部服务暴露给 Istio 集群中的客户端。你将会学到如何通过定义 ServiceEntry 来调用外部服务；或者简单的对 Istio 进行配置，要求其直接放">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.aiwaner.cn/istio-3.2-traffic-management-part2.html">
+
+
+
+
+<meta name="baidu-site-verification" content="HSZDfuDV5vJsChTx">
+<meta name="google-site-verification" content="xlqg-trb0NI4UrO-kLvMhyPYGZSSSzFMDe0SoFRWkII">
+
+  <title>istio实践 - 流量管理 - part2 | Jasper's Blog</title>
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-137043198-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?91e4f1824e2528b40204307bacc7356d";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+   
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Jasper's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description"></h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://www.aiwaner.cn/istio-3.2-traffic-management-part2.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jasper">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="https://avatars2.githubusercontent.com/u/7664221?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Jasper's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">istio实践 - 流量管理 - part2</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-29T15:35:24+08:00">
+                2019-03-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Istio/" itemprop="url" rel="index">
+                    <span itemprop="name">Istio</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/istio-3.2-traffic-management-part2.html#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="istio-3.2-traffic-management-part2.html" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-eye"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="控制-Egress-流量"><a href="#控制-Egress-流量" class="headerlink" title="控制 Egress 流量"></a>控制 Egress 流量</h3><p>默认情况下，Istio 服务网格内的 Pod，由于其 iptables 将所有外发流量都透明的转发给了 Sidecar，所以这些集群内的服务无法访问集群之外的 URL，而只能处理集群内部的目标。</p>
+<p>本文的任务描述了如何将外部服务暴露给 Istio 集群中的客户端。你将会学到如何通过定义 ServiceEntry 来调用外部服务；或者简单的对 Istio 进行配置，要求其直接放行对特定 IP 范围的访问。</p>
+<h4 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h4><ul>
+<li><p>启动 sleep 示例应用，使用这一应用来完成对外部服务的调用过程。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">⇒   kubectl apply -f samples/sleep/sleep.yaml</span><br><span class="line">serviceaccount/sleep created</span><br><span class="line">service/sleep created</span><br><span class="line">deployment.extensions/sleep created</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将 SOURCE_POD 环境变量设置为已部署的 sleep pod：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">⇒  export SOURCE_POD=$(kubectl get pod -l app=sleep -o jsonpath=&#123;.items..metadata.name&#125;)</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<a id="more"></a>
+<h4 id="在-Istio-中配置外部服务"><a href="#在-Istio-中配置外部服务" class="headerlink" title="在 Istio 中配置外部服务"></a>在 Istio 中配置外部服务</h4><p>通过配置 Istio ServiceEntry，可以从 Istio 集群中访问任何可公开访问的服务。 这里我们会使用 httpbin.org 以及 <a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a> 进行试验。</p>
+<h4 id="配置外部服务"><a href="#配置外部服务" class="headerlink" title="配置外部服务"></a>配置外部服务</h4><ol>
+<li><p>创建一个 ServiceEntry 对象，放行对一个外部 HTTP 服务的访问：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">⇒  kubectl apply -f - &lt;&lt;EOF</span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: ServiceEntry</span><br><span class="line">metadata:</span><br><span class="line">  name: httpbin-ext</span><br><span class="line">spec:</span><br><span class="line">  hosts:</span><br><span class="line">  - httpbin.org</span><br><span class="line">  ports:</span><br><span class="line">  - number: 80</span><br><span class="line">    name: http</span><br><span class="line">    protocol: HTTP</span><br><span class="line">  resolution: DNS</span><br><span class="line">  location: MESH_EXTERNAL</span><br><span class="line"></span><br><span class="line">heredoc&gt; EOF</span><br><span class="line">serviceentry.networking.istio.io/httpbin-ext created</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>创建一个 ServiceEntry 以及 VirtualService，允许访问外部 HTTPS 服务。注意：包括 HTTPS 在内的 TLS 协议，在 ServiceEntry 之外，还需要创建 TLS VirtualService。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl exec -it $SOURCE_POD -c sleep sh</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>向外部 HTTP 服务发出请求：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl http://httpbin.org/headers</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h4 id="配置外部-HTTPS-服务"><a href="#配置外部-HTTPS-服务" class="headerlink" title="配置外部 HTTPS 服务"></a>配置外部 HTTPS 服务</h4><ol>
+<li><p>创建一个 ServiceEntry 以允许访问外部 HTTPS 服务。 对于 TLS 协议（包括 HTTPS），除了 ServiceEntry 之外，还需要 VirtualService。 没有 VirtualService, ServiceEntry 所暴露的服务将不被定义。VirtualService 必须在 match 子句中包含 tls 规则和 sni_hosts 以启用 SNI 路由</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">⇒ kubectl apply -f - &lt;&lt;EOF</span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: ServiceEntry</span><br><span class="line">metadata:</span><br><span class="line">  name: google</span><br><span class="line">spec:</span><br><span class="line">  hosts:</span><br><span class="line">  - www.google.com</span><br><span class="line">  ports:</span><br><span class="line">  - number: 443</span><br><span class="line">    name: https</span><br><span class="line">    protocol: HTTPS</span><br><span class="line">  resolution: DNS</span><br><span class="line">  location: MESH_EXTERNAL</span><br><span class="line">---</span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: VirtualService</span><br><span class="line">metadata:</span><br><span class="line">  name: google</span><br><span class="line">spec:</span><br><span class="line">  hosts:</span><br><span class="line">  - www.google.com</span><br><span class="line">  tls:</span><br><span class="line">  - match:</span><br><span class="line">    - port: 443</span><br><span class="line">      sni_hosts:</span><br><span class="line">      - www.google.com</span><br><span class="line">    route:</span><br><span class="line">    - destination:</span><br><span class="line">        host: www.google.com</span><br><span class="line">        port:</span><br><span class="line">          number: 443</span><br><span class="line">      weight: 100</span><br><span class="line"></span><br><span class="line">heredoc&gt; EOF</span><br><span class="line">serviceentry.networking.istio.io/google created</span><br><span class="line">virtualservice.networking.istio.io/google created</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>执行 sleep service 源 pod：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl exec -it $SOURCE_POD -c sleep sh</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>kubectl exec -it $SOURCE_POD -c sleep sh</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl exec -it $SOURCE_POD -c sleep sh</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h4 id="为外部服务设置路由规则"><a href="#为外部服务设置路由规则" class="headerlink" title="为外部服务设置路由规则"></a>为外部服务设置路由规则</h4><p>通过 ServiceEntry 访问外部服务的流量，和网格内流量类似，都可以进行 Istio 路由规则 的配置。下面我们使用 istioctl 为 httpbin.org 服务设置一个超时规则。</p>
+<ol>
+<li><p>在测试 Pod 内部，使用 curl 调用 httpbin.org 这一外部服务的 /delay 端点</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">⇒ kubectl exec -it $SOURCE_POD -c sleep sh</span><br><span class="line"># time curl -o /dev/null -s -w &quot;%&#123;http_code&#125;\n&quot; http://httpbin.org/delay/5</span><br><span class="line">200</span><br><span class="line">real	0m 11.19s</span><br><span class="line">user	0m 0.00s</span><br><span class="line">sys	0m 0.00s</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>退出测试 Pod，使用 kubectl 为 httpbin.org 外部服务的访问设置一个 3 秒钟的超时：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">⇒  kubectl apply -f - &lt;&lt;EOF</span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: VirtualService</span><br><span class="line">metadata:</span><br><span class="line">  name: httpbin-ext</span><br><span class="line">spec:</span><br><span class="line">  hosts:</span><br><span class="line">    - httpbin.org</span><br><span class="line">  http:</span><br><span class="line">  - timeout: 3s</span><br><span class="line">    route:</span><br><span class="line">      - destination:</span><br><span class="line">          host: httpbin.org</span><br><span class="line">        weight: 100</span><br><span class="line"></span><br><span class="line">heredoc&gt; EOF</span><br><span class="line">virtualservice.networking.istio.io/httpbin-ext created</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>等待几秒钟之后，再次发起 curl 请求：<br>// TODO</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">⇒  kubectl exec -it $SOURCE_POD -c sleep sh</span><br><span class="line">/ # time curl -o /dev/null -s -w &quot;%&#123;http_code&#125;\n&quot; http://httpbin.org/delay/5</span><br><span class="line">200</span><br><span class="line">real	0m 11.13s</span><br><span class="line">user	0m 0.00s</span><br><span class="line">sys	0m 0.00s</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>这一次会在 3 秒钟之后收到一个内容为 504 (Gateway Timeout) 的响应。虽然 httpbin.org 还在等待他的 5 秒钟，Istio 却在 3 秒钟的时候切断了请求。</p>
+<h4 id="理解原理"><a href="#理解原理" class="headerlink" title="理解原理"></a>理解原理</h4><p>这个任务中，我们使用两种方式从 Istio 服务网格内部来完成对外部服务的调用：</p>
+<p>使用 ServiceEntry (推荐方式)</p>
+<p><del>配置 Istio sidecar，从它的重定向 IP 表中排除外部服务的 IP 范围</del></p>
+<p>第一种方式（ServiceEntry）中，网格内部的服务不论是访问内部还是外部的服务，都可以使用同样的 Istio 服务网格的特性。我们通过为外部服务访问设置超时规则的例子，来证实了这一优势。</p>
+<h3 id="熔断"><a href="#熔断" class="headerlink" title="熔断"></a>熔断</h3><p>本任务展示了用连接、请求以及外部检测来进行熔断配置的过程。<br>断路器是创建弹性微服务应用程序的重要模式。断路器允许您编写限制故障、延迟峰值以及其他不良网络特性影响的应用程序。<br>在此任务中，您将配置断路器规则，然后通过故意“跳闸”断路器来测试配置。</p>
+<ol>
+<li><p>准备<br>启动 httpbin 示例应用，这个应用将会作为本任务的后端服务。在部署 httpbin 应用之前手工注入 Sidecar</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f &lt;(istioctl kube-inject -f samples/httpbin/httpbin.yaml)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>创建一个 目标规则，针对 httpbin 服务设置断路器：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">⇒  kubectl apply -f - &lt;&lt;EOF</span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: DestinationRule</span><br><span class="line">metadata:</span><br><span class="line">  name: httpbin</span><br><span class="line">spec:</span><br><span class="line">  host: httpbin</span><br><span class="line">  trafficPolicy:</span><br><span class="line">    connectionPool:</span><br><span class="line">      tcp:</span><br><span class="line">        maxConnections: 1</span><br><span class="line">      http:</span><br><span class="line">        http1MaxPendingRequests: 1</span><br><span class="line">        maxRequestsPerConnection: 1</span><br><span class="line">    outlierDetection:</span><br><span class="line">      consecutiveErrors: 1</span><br><span class="line">      interval: 1s</span><br><span class="line">      baseEjectionTime: 3m</span><br><span class="line">      maxEjectionPercent: 100</span><br><span class="line">    tls:</span><br><span class="line">      mode: ISTIO_MUTUAL</span><br><span class="line">EOF</span><br><span class="line"></span><br><span class="line">destinationrule.networking.istio.io/httpbin created</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>检查我们的目标规则，确定已经正确建立：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">kubectl get destinationrule httpbin -o yaml</span><br><span class="line">⇒  kubectl get destinationrule httpbin -o yaml</span><br><span class="line"></span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: DestinationRule</span><br><span class="line">metadata:</span><br><span class="line"> ...</span><br><span class="line">  generation: 1</span><br><span class="line">  name: httpbin</span><br><span class="line">  namespace: default</span><br><span class="line">  resourceVersion: &quot;163136&quot;</span><br><span class="line">  selfLink: /apis/networking.istio.io/v1alpha3/namespaces/default/destinationrules/httpbin</span><br><span class="line">  uid: 00b60dd1-5133-11e9-8049-0800278050ec</span><br><span class="line">spec:</span><br><span class="line">  host: httpbin</span><br><span class="line">  trafficPolicy:</span><br><span class="line">    connectionPool:</span><br><span class="line">      http:</span><br><span class="line">        http1MaxPendingRequests: 1</span><br><span class="line">        maxRequestsPerConnection: 1</span><br><span class="line">      tcp:</span><br><span class="line">        maxConnections: 1</span><br><span class="line">    outlierDetection:</span><br><span class="line">      baseEjectionTime: 3m</span><br><span class="line">      consecutiveErrors: 1</span><br><span class="line">      interval: 1s</span><br><span class="line">      maxEjectionPercent: 100</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h4 id="设置客户端"><a href="#设置客户端" class="headerlink" title="设置客户端"></a>设置客户端</h4><p>现在我们已经设置了调用 httpbin 服务的规则，接下来创建一个客户端，用来向后端服务发送请求，观察是否会触发熔断策略。这里要使用一个简单的负载测试客户端，名字叫 fortio。这个客户端可以控制连接数量、并发数以及发送 HTTP 请求的延迟。使用这一客户端，能够有效的触发前面在目标规则中设置的熔断策略。</p>
+<ol>
+<li><p>这里我们会把给客户端也进行 Sidecar 的注入，以此保证 Istio 对网络交互的控制</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f &lt;(istioctl kube-inject -f samples/httpbin/sample-client/fortio-deploy.yaml)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>接下来就可以登入客户端 Pod 并使用 Fortio 工具来调用 httpbin。-curl 参数表明只调用一次：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">⇒  FORTIO_POD=$(kubectl get pod | grep fortio | awk &apos;&#123; print $1 &#125;&apos;)</span><br><span class="line">kubectl exec -it $FORTIO_POD  -c fortio /usr/bin/fortio -- load -curl  http://httpbin:8000/get</span><br><span class="line"></span><br><span class="line">HTTP/1.1 200 OK</span><br><span class="line">server: envoy</span><br><span class="line">date: Fri, 29 Mar 2019 01:16:41 GMT</span><br><span class="line">content-type: application/json</span><br><span class="line">content-length: 814</span><br><span class="line">access-control-allow-origin: *</span><br><span class="line">access-control-allow-credentials: true</span><br><span class="line">x-envoy-upstream-service-time: 4</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">  &quot;args&quot;: &#123;&#125;,</span><br><span class="line">  &quot;headers&quot;: &#123;</span><br><span class="line">    &quot;Content-Length&quot;: &quot;0&quot;,</span><br><span class="line">    &quot;Host&quot;: &quot;httpbin:8000&quot;,</span><br><span class="line">    &quot;User-Agent&quot;: &quot;fortio.org/fortio-1.3.1&quot;,</span><br><span class="line">    &quot;X-B3-Sampled&quot;: &quot;1&quot;,</span><br><span class="line">    &quot;X-B3-Spanid&quot;: &quot;5f828321fef8360e&quot;,</span><br><span class="line">    &quot;X-B3-Traceid&quot;: &quot;6d63083e713db3d25f828321fef8360e&quot;,</span><br><span class="line">    &quot;X-Envoy-Decorator-Operation&quot;: &quot;httpbin.default.svc.cluster.local:8000/*&quot;,</span><br><span class="line">    &quot;X-Istio-Attributes&quot;: &quot;Cj0KF2Rlc3RpbmF0aW9uLnNlcnZpY2UudWlkEiISIGlzdGlvOi8vZGVmYXVsdC9zZXJ2aWNlcy9odHRwYmluCj8KGGRlc3RpbmF0aW9uLnNlcnZpY2UuaG9zdBIjEiFodHRwYmluLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwKJQoYZGVzdGluYXRpb24uc2VydmljZS5uYW1lEgkSB2h0dHBiaW4KKgodZGVzdGluYXRpb24uc2VydmljZS5uYW1lc3BhY2USCRIHZGVmYXVsdApDCgpzb3VyY2UudWlkEjUSM2t1YmVybmV0ZXM6Ly9mb3J0aW8tZGVwbG95LTc4Yzc4ZmY4NDctcWpjbmouZGVmYXVsdA==&quot;</span><br><span class="line">  &#125;,</span><br><span class="line">  &quot;origin&quot;: &quot;172.17.0.27&quot;,</span><br><span class="line">  &quot;url&quot;: &quot;http://httpbin:8000/get&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h4 id="触发熔断机制"><a href="#触发熔断机制" class="headerlink" title="触发熔断机制"></a>触发熔断机制</h4><p>在上面的熔断设置中指定了 maxConnections: 1 以及 http1MaxPendingRequests: 1。这意味着如果超过了一个连接同时发起请求，Istio 就会熔断，阻止后续的请求或连接。</p>
+<ol>
+<li>接下来尝试一下两个并发连接（-c 2），发送 20 请求（-n 20）：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">⇒  kubectl exec -it $FORTIO_POD  -c fortio /usr/bin/fortio -- load -c 2 -qps 0 -n 20 -loglevel Warning http://httpbin:8000/get</span><br><span class="line"></span><br><span class="line">01:16:54 I logger.go:97&gt; Log level is now 3 Warning (was 2 Info)</span><br><span class="line">Fortio 1.3.1 running at 0 queries per second, 4-&gt;4 procs, for 20 calls: http://httpbin:8000/get</span><br><span class="line">Starting at max qps with 2 thread(s) [gomax 4] for exactly 20 calls (10 per thread + 0)</span><br><span class="line">01:16:54 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">01:16:54 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">Ended after 48.551417ms : 20 calls. qps=411.93</span><br><span class="line">Aggregated Function Time : count 20 avg 0.0047319828 +/- 0.001582 min 0.000856705 max 0.008711503 sum 0.094639655</span><br><span class="line"># range, mid point, percentile, count</span><br><span class="line">&gt;= 0.000856705 &lt;= 0.001 , 0.000928353 , 5.00, 1</span><br><span class="line">&gt; 0.001 &lt;= 0.002 , 0.0015 , 10.00, 1</span><br><span class="line">&gt; 0.004 &lt;= 0.005 , 0.0045 , 55.00, 9</span><br><span class="line">&gt; 0.005 &lt;= 0.006 , 0.0055 , 95.00, 8</span><br><span class="line">&gt; 0.008 &lt;= 0.0087115 , 0.00835575 , 100.00, 1</span><br><span class="line"># target 50% 0.00488889</span><br><span class="line"># target 75% 0.0055</span><br><span class="line"># target 90% 0.005875</span><br><span class="line"># target 99% 0.0085692</span><br><span class="line"># target 99.9% 0.00869727</span><br><span class="line">Sockets used: 4 (for perfect keepalive, would be 2)</span><br><span class="line">Code 200 : 18 (90.0 %)</span><br><span class="line">Code 503 : 2 (10.0 %)</span><br><span class="line">Response Header Sizes : count 20 avg 207 +/- 69 min 0 max 230 sum 4140</span><br><span class="line">Response Body/Total Sizes : count 20 avg 961.3 +/- 248.1 min 217 max 1044 sum 19226</span><br><span class="line">All done 20 calls (plus 0 warmup) 4.732 ms avg, 411.9 qps</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>这里可以看到，几乎所有请求都通过了。Istio-proxy 允许存在一些误差。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Code 200 : 18 (90.0 %)</span><br><span class="line">Code 503 : 2 (10.0 %)</span><br></pre></td></tr></table></figure></p>
+<ol start="2">
+<li>接下来把并发连接数量提高到 3：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">⇒  kubectl exec -it $FORTIO_POD  -c fortio /usr/bin/fortio -- load -c 3 -qps 0 -n 30 -loglevel Warning http://httpbin:8000/get</span><br><span class="line"></span><br><span class="line">01:57:32 I logger.go:97&gt; Log level is now 3 Warning (was 2 Info)</span><br><span class="line">Fortio 1.3.1 running at 0 queries per second, 4-&gt;4 procs, for 30 calls: http://httpbin:8000/get</span><br><span class="line">Starting at max qps with 3 thread(s) [gomax 4] for exactly 30 calls (10 per thread + 0)</span><br><span class="line">01:57:32 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">01:57:32 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">01:57:32 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">01:57:32 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">01:57:32 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">01:57:32 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">01:57:32 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">01:57:32 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">01:57:32 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">01:57:32 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">01:57:32 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">01:57:32 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">01:57:32 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">01:57:32 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">01:57:33 W http_client.go:679&gt; Parsed non ok code 503 (HTTP/1.1 503)</span><br><span class="line">Ended after 80.416474ms : 30 calls. qps=373.06</span><br><span class="line">Aggregated Function Time : count 30 avg 0.006774503 +/- 0.005788 min 0.000560746 max 0.021858561 sum 0.203235091</span><br><span class="line"># range, mid point, percentile, count</span><br><span class="line">&gt;= 0.000560746 &lt;= 0.001 , 0.000780373 , 13.33, 4</span><br><span class="line">&gt; 0.001 &lt;= 0.002 , 0.0015 , 23.33, 3</span><br><span class="line">&gt; 0.002 &lt;= 0.003 , 0.0025 , 33.33, 3</span><br><span class="line">&gt; 0.003 &lt;= 0.004 , 0.0035 , 40.00, 2</span><br><span class="line">&gt; 0.004 &lt;= 0.005 , 0.0045 , 50.00, 3</span><br><span class="line">&gt; 0.005 &lt;= 0.006 , 0.0055 , 60.00, 3</span><br><span class="line">&gt; 0.006 &lt;= 0.007 , 0.0065 , 66.67, 2</span><br><span class="line">&gt; 0.008 &lt;= 0.009 , 0.0085 , 73.33, 2</span><br><span class="line">&gt; 0.011 &lt;= 0.012 , 0.0115 , 76.67, 1</span><br><span class="line">&gt; 0.012 &lt;= 0.014 , 0.013 , 86.67, 3</span><br><span class="line">&gt; 0.014 &lt;= 0.016 , 0.015 , 93.33, 2</span><br><span class="line">&gt; 0.02 &lt;= 0.0218586 , 0.0209293 , 100.00, 2</span><br><span class="line"># target 50% 0.005</span><br><span class="line"># target 75% 0.0115</span><br><span class="line"># target 90% 0.015</span><br><span class="line"># target 99% 0.0215798</span><br><span class="line"># target 99.9% 0.0218307</span><br><span class="line">Sockets used: 18 (for perfect keepalive, would be 3)</span><br><span class="line">Code 200 : 15 (50.0 %)</span><br><span class="line">Code 503 : 15 (50.0 %)</span><br><span class="line">Response Header Sizes : count 30 avg 115.13333 +/- 115.1 min 0 max 231 sum 3454</span><br><span class="line">Response Body/Total Sizes : count 30 avg 630.63333 +/- 413.6 min 217 max 1045 sum 18919</span><br><span class="line">All done 30 calls (plus 0 warmup) 6.775 ms avg, 373.1 qps</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>这时候会观察到，熔断行为按照之前的设计生效了，只有 50% 的请求获得通过，剩余请求被断路器拦截了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Code 200 : 15 (50.0 %)</span><br><span class="line">Code 503 : 15 (50.0 %)</span><br></pre></td></tr></table></figure></p>
+<ol start="3">
+<li>我们可以查询 istio-proxy 的状态，获取更多相关信息：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">⇒  kubectl exec -it $FORTIO_POD  -c istio-proxy  -- sh -c &apos;curl localhost:15000/stats&apos; | grep httpbin | grep pending</span><br><span class="line"></span><br><span class="line">cluster.outbound|8000||httpbin.default.svc.cluster.local.circuit_breakers.default.rq_pending_open: 0</span><br><span class="line">cluster.outbound|8000||httpbin.default.svc.cluster.local.circuit_breakers.high.rq_pending_open: 0</span><br><span class="line">cluster.outbound|8000||httpbin.default.svc.cluster.local.upstream_rq_pending_active: 0</span><br><span class="line">cluster.outbound|8000||httpbin.default.svc.cluster.local.upstream_rq_pending_failure_eject: 0</span><br><span class="line">cluster.outbound|8000||httpbin.default.svc.cluster.local.upstream_rq_pending_overflow: 40</span><br><span class="line">cluster.outbound|8000||httpbin.default.svc.cluster.local.upstream_rq_pending_total: 71</span><br><span class="line">cluster.outbound|80||httpbin.org.circuit_breakers.default.rq_pending_open: 0</span><br><span class="line">cluster.outbound|80||httpbin.org.circuit_breakers.high.rq_pending_open: 0</span><br><span class="line">cluster.outbound|80||httpbin.org.upstream_rq_pending_active: 0</span><br><span class="line">cluster.outbound|80||httpbin.org.upstream_rq_pending_failure_eject: 0</span><br><span class="line">cluster.outbound|80||httpbin.org.upstream_rq_pending_overflow: 0</span><br><span class="line">cluster.outbound|80||httpbin.org.upstream_rq_pending_total: 0</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>upstream_rq_pending_overflow 的值是 40，说明有 40 次调用被标志为熔断（因为有多次尝试）</p>
+<h4 id="清理"><a href="#清理" class="headerlink" title="清理"></a>清理</h4><ol>
+<li><p>清理规则</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">⇒  kubectl delete destinationrule httpbin</span><br><span class="line"></span><br><span class="line">destinationrule.networking.istio.io &quot;httpbin&quot; deleted</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>关闭 httpbin 服务和客户端：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">⇒  kubectl delete deploy httpbin fortio-deploy</span><br><span class="line">kubectl delete svc httpbin</span><br><span class="line"></span><br><span class="line">deployment.extensions &quot;httpbin&quot; deleted</span><br><span class="line">deployment.extensions &quot;fortio-deploy&quot; deleted</span><br><span class="line">service &quot;httpbin&quot; deleted</span><br></pre></td></tr></table></figure></li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>Donate comment here</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="https://github.com/ja3per/ja3per.github.io/blob/master/pay-wechat.png?raw=true" alt="Jasper 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="https://github.com/ja3per/ja3per.github.io/blob/master/pay-ali.png?raw=true" alt="Jasper 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Istio/" rel="tag"># Istio</a>
+          
+            <a href="/tags/service-mesh/" rel="tag"># service mesh</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/istio-3.1-traffic-management-part1.html" rel="next" title="istio实践 - 流量管理 - part1">
+                <i class="fa fa-chevron-left"></i> istio实践 - 流量管理 - part1
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/istio-4-security.html" rel="prev" title="istio实践 - 安全">
+                istio实践 - 安全 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="https://avatars2.githubusercontent.com/u/7664221?s=460&v=4" alt="Jasper">
+            
+              <p class="site-author-name" itemprop="name">Jasper</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">9</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/ja3per" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="mailto:sp2g88@gmail.com" target="_blank" title="E-Mail">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#控制-Egress-流量"><span class="nav-number">1.</span> <span class="nav-text">控制 Egress 流量</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#准备"><span class="nav-number">1.1.</span> <span class="nav-text">准备</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#在-Istio-中配置外部服务"><span class="nav-number">1.2.</span> <span class="nav-text">在 Istio 中配置外部服务</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#配置外部服务"><span class="nav-number">1.3.</span> <span class="nav-text">配置外部服务</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#配置外部-HTTPS-服务"><span class="nav-number">1.4.</span> <span class="nav-text">配置外部 HTTPS 服务</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#为外部服务设置路由规则"><span class="nav-number">1.5.</span> <span class="nav-text">为外部服务设置路由规则</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#理解原理"><span class="nav-number">1.6.</span> <span class="nav-text">理解原理</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#熔断"><span class="nav-number">2.</span> <span class="nav-text">熔断</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#设置客户端"><span class="nav-number">2.1.</span> <span class="nav-text">设置客户端</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#触发熔断机制"><span class="nav-number">2.2.</span> <span class="nav-text">触发熔断机制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#清理"><span class="nav-number">2.3.</span> <span class="nav-text">清理</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2015 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jasper</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="http://hexo.io" rel="external nofollow">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next" rel="external nofollow">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://ja3per.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.aiwaner.cn/istio-3.2-traffic-management-part2.html';
+          this.page.identifier = 'istio-3.2-traffic-management-part2.html';
+          this.page.title = 'istio实践 - 流量管理 - part2';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://ja3per.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
